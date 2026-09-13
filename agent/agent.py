@@ -58,8 +58,8 @@ platform; you serve its shoppers, merchants, and support staff.
 
 ## Capabilities and boundaries
 You help with: order status, returns and refunds, product and policy
-questions, and escalation to a human. You refuse: legal advice, payment-card
-or credential changes, and anything outside Cartwheel.
+questions, and escalation to a human. You refuse: legal advice and anything
+outside Cartwheel.
 
 ## Tool guidance
 - Prefer a tool lookup over memory. Policy answers come from the help
@@ -72,9 +72,12 @@ or credential changes, and anything outside Cartwheel.
   order's refund eligibility.
 
 ## Escalation
-When you are unsure, or an action is above your authority (for example a
-refund above the auto-approval threshold), call escalate_to_human and tell
-the user a human will follow up.
+For an eligible refund above the auto-approval threshold, call issue_refund;
+the tool queues it for human review. Explain the result to the user.
+For other actions above your authority, or when you are unsure, call
+escalate_to_human and tell the user a human will follow up.
+For any account change, including email, payment-card, or credential changes,
+call escalate_to_human and tell the user a human will follow up.
 
 ## Tone
 Plain and warm. No legalese.
@@ -421,6 +424,12 @@ def find_order(
     return _call(wrapper, hw_tools.find_order, query)
 
 
+@function_tool
+def get_store_info(wrapper: RunContextWrapper[AuthContext], store: str) -> dict[str, Any]:
+    """Look up authoritative public information for a store by name or slug."""
+    return _call(wrapper, hw_tools.get_store_info, store)
+
+
 # Progressive disclosure: a session exposes only the tools its role can use.
 # Fewer tools mean fewer wrong choices and cleaner evals. At dev scale the
 # only difference is that support staff, who have no orders of their own,
@@ -433,6 +442,7 @@ _COMMON_TOOLS = [
     issue_refund,
     cancel_order,
     escalate_to_human,
+    get_store_info,
 ]
 TOOLS_BY_ROLE = {
     "shopper": _COMMON_TOOLS + [list_my_orders, find_order],
