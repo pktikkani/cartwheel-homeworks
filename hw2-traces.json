@@ -1,0 +1,20 @@
+[
+  {
+    "trace_id": "311e204522c63008c473a64b13718960",
+    "permalink": "https://us.cloud.langfuse.com/project/cmuax4ksf0qtxad0c16i8wjig/traces/311e204522c63008c473a64b13718960",
+    "prompt_version": "4b79cf6be56b",
+    "user_role": "merchant",
+    "user_id": 9002,
+    "tool_order": ["get_order"],
+    "final_status": "completed"
+  },
+  {
+    "trace_id": "fb95a847de2115f87f407e11cd86ca73",
+    "permalink": "https://us.cloud.langfuse.com/project/cmuax4ksf0qtxad0c16i8wjig/traces/fb95a847de2115f87f407e11cd86ca73",
+    "prompt_version": "4b79cf6be56b",
+    "user_role": "shopper",
+    "user_id": 1,
+    "tool_order": ["search_help_center", "get_policy"],
+    "final_status": "completed"
+  }
+]
