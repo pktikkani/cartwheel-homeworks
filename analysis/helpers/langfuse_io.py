@@ -40,6 +40,23 @@ SEED_TAG = "error-analysis-seed"
 # The metadata key that carries the readable logical id on each Langfuse trace.
 LOGICAL_ID_KEY = "cartwheel_trace_id"
 
+_ANALYSIS_KEYS = (
+    "CARTWHEEL_ANALYSIS_LANGFUSE_PUBLIC_KEY",
+    "CARTWHEEL_ANALYSIS_LANGFUSE_SECRET_KEY",
+    "CARTWHEEL_ANALYSIS_LANGFUSE_HOST",
+)
+_DEFAULT_KEYS = (
+    "LANGFUSE_PUBLIC_KEY",
+    "LANGFUSE_SECRET_KEY",
+    "LANGFUSE_HOST",
+)
+
+
+def _connection_keys() -> tuple[str, str, str]:
+    if any(os.environ.get(key) for key in _ANALYSIS_KEYS):
+        return _ANALYSIS_KEYS
+    return _DEFAULT_KEYS
+
 
 class LangfuseNotConfigured(RuntimeError):
     """Raised when a live Langfuse call is attempted without the env in place.
@@ -50,17 +67,14 @@ class LangfuseNotConfigured(RuntimeError):
 
 
 def is_configured() -> bool:
-    """True when the ``LANGFUSE_*`` env is present, so live calls are allowed.
+    """True when a complete analysis or default Langfuse connection is set.
 
-    Every other function in this module short-circuits on this. Callers use it
-    to choose between the live Langfuse path and the committed-JSON fallback,
-    and it is the single gate that keeps unit tests offline.
+    Analysis-specific settings take precedence so HW4 can read and score the
+    project containing HW3 traces without changing the agent's tracing target.
+    A partial analysis configuration is an error, not a reason to silently use
+    a different project.
     """
-    return bool(
-        os.environ.get("LANGFUSE_PUBLIC_KEY")
-        and os.environ.get("LANGFUSE_SECRET_KEY")
-        and os.environ.get("LANGFUSE_HOST")
-    )
+    return all(os.environ.get(key) for key in _connection_keys())
 
 
 def _client() -> Any:
@@ -71,13 +85,14 @@ def _client() -> Any:
     """
     if not is_configured():
         raise LangfuseNotConfigured(
-            "Langfuse is not configured (LANGFUSE_PUBLIC_KEY / "
-            "LANGFUSE_SECRET_KEY / LANGFUSE_HOST). Callers should fall back to "
-            "the local analysis/state JSON instead of calling this module."
+            "Langfuse is not configured: set all three "
+            "CARTWHEEL_ANALYSIS_LANGFUSE_* variables, or all three "
+            "LANGFUSE_* variables."
         )
     from langfuse import Langfuse
 
-    return Langfuse()
+    public_key, secret_key, host = (os.environ[key] for key in _connection_keys())
+    return Langfuse(public_key=public_key, secret_key=secret_key, host=host)
 
 
 def logical_to_langfuse_id(logical_id: str, client: Any | None = None) -> str:
